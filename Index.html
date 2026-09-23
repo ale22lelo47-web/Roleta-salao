@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roleta de Descontos - Salão</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #f8e1e7 0%, #e8c4d4 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+  }
+  h1 {
+    color: #8b3a5e;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+  p.sub {
+    color: #a05a78;
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+  }
+  .roleta-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin-bottom: 25px;
+  }
+  .ponteiro {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 35px solid #8b3a5e;
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  canvas {
+    border-radius: 50%;
+    box-shadow: 0 8px 25px rgba(139,58,94,0.3);
+    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+  }
+  button {
+    background: #8b3a5e;
+    color: #fff;
+    border: none;
+    padding: 16px 40px;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(139,58,94,0.4);
+    transition: transform 0.2s;
+  }
+  button:active { transform: scale(0.96); }
+  button:disabled {
+    background: #c9a5b5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .resultado {
+    margin-top: 25px;
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(139,58,94,0.2);
+    display: none;
+    max-width: 320px;
+  }
+  .resultado.show { display: block; animation: aparecer 0.5s ease; }
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .resultado h2 {
+    color: #8b3a5e;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
+  .resultado p {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .whats {
+    display: inline-block;
+    margin-top: 18px;
+    background: #25D366;
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 0.95rem;
+  }
+</style>
+</head>
+<body>
+
+  <h1>Roleta de Descontos</h1>
+  <p class="sub">Gire e ganhe um prêmio especial 💅</p>
+
+  <div class="roleta-container">
+    <div class="ponteiro"></div>
+    <canvas id="roleta" width="300" height="300"></canvas>
+  </div>
+
+  <button id="girarBtn" onclick="girar()">GIRAR A ROLETA</button>
+
+  <div class="resultado" id="resultado">
+    <h2 id="premioTexto"></h2>
+    <p>Mostre esta tela no salão para resgatar seu prêmio!</p>
+    <a class="whats" id="whatsLink" href="#" target="_blank">Agendar pelo WhatsApp</a>
+  </div>
+
+<script>
+  const premios = [
+    { texto: "10% OFF", cor: "#f8c8dc" },
+    { texto: "15% OFF", cor: "#e8a4c0" },
+    { texto: "20% OFF", cor: "#d97ba0" },
+    { texto: "Brinde", cor: "#f8c8dc" },
+    { texto: "30% OFF", cor: "#c95d85" },
+    { texto: "Escova Grátis", cor: "#e8a4c0" },
+    { texto: "25% OFF", cor: "#d97ba0" },
+    { texto: "Tente Outra", cor: "#f8c8dc" }
+  ];
+
+  const canvas = document.getElementById("roleta");
+  const ctx = canvas.getContext("2d");
+  const numFatias = premios.length;
+  const anguloFatia = (2 * Math.PI) / numFatias;
+  const centroX = canvas.width / 2;
+  const centroY = canvas.height / 2;
+  const raio = centroX - 5;
+
+  function desenharRoleta() {
+    for (let i = 0; i < numFatias; i++) {
+      const inicio = i * anguloFatia;
+      const fim = inicio + anguloFatia;
+
+      ctx.beginPath();
+      ctx.moveTo(centroX, centroY);
+      ctx.arc(centroX, centroY, raio, inicio, fim);
+      ctx.closePath();
+      ctx.fillStyle = premios[i].cor;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(centroX, centroY);
+      ctx.rotate(inicio + anguloFatia / 2);
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#6b2a48";
+      ctx.font = "bold 13px Arial";
+      ctx.fillText(premios[i].texto, raio - 15, 5);
+      ctx.restore();
+    }
+  }
+
+  let girando = false;
+
+  function girar() {
+    if (girando) return;
+    girando = true;
+
+    const btn = document.getElementById("girarBtn");
+    btn.disabled = true;
+    document.getElementById("resultado").classList.remove("show");
+
+    const indiceSorteado = Math.floor(Math.random() * numFatias);
+    const voltas = 5;
+    const anguloFinal = (2 * Math.PI * voltas) +
+      (numFatias - indiceSorteado) * anguloFatia -
+      anguloFatia / 2;
+
+    canvas.style.transform = `rotate(${anguloFinal}rad)`;
+
+    setTimeout(() => {
+      const premio = premios[indiceSorteado];
+      document.getElementById("premioTexto").textContent = premio.texto;
+      document.getElementById("resultado").classList.add("show");
+      btn.disabled = false;
+      girando = false;
+    }, 4200);
+  }
+
+  desenharRoleta();
+</script>
+
+</body>
+</html>
